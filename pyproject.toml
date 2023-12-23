@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0","paho-mqtt","PyYAML"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "wetcave-sensors"
+version = "0.0"
+authors = [
+  { name="Roelof Rietbroek", email="roelof@wobbly.earth" },
+]
+description = "Sensor and relay daemon for underground water tank system"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: POSIX :: Linux",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Development Status :: 1 - Planning"
+]
+
+
+[project.urls]
+"Homepage" = "https://github.com/strawpants/wetcave-sensors"
+"Bug Tracker" = "https://github.com/strawpants/wetcave-sensors/issues"
+
+

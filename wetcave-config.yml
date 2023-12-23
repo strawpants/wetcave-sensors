@@ -1,0 +1,20 @@
+mqtt:
+        server: "your.mqtt.serverhost"
+        user: "mqttusername"
+        password: "mqttpassword"
+        clientid: "wetcave"
+        topicroot: "wetcave"
+        port: 8883
+rangesounder:
+        gpiopin: 24
+        sampling: 60
+        nsamples: 5
+        speedofsound: 340
+tippingbucket:
+        sampling: 60
+        gpiopin: 10
+        mm_tip: 0.343839
+barotemp:
+        sampling: 60
+        nsamples: 5
+
