@@ -49,6 +49,7 @@ class DataLogger:
         passw=config["mqtt"]["password"]
         self.topicroot=config["mqtt"]["topicroot"]
         self.port=config["mqtt"]["port"]
+        self.qos=config["mqtt"]["qos"]
         self.client = mqtt.Client(client_id=clientid,transport='tcp', protocol=mqtt.MQTTv5)
         self.client.username_pw_set(user,passw)
         self.client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
@@ -56,6 +57,7 @@ class DataLogger:
         self.client.on_disconnect = self.mqtt_ondisconnect
         self.mqttConnected=False
         self.pubcount=0
+        
 
     def mqtt_onconnect(self,client, userdata, flags,rc,aux):
         self.mqttConnected=True    
@@ -114,7 +116,7 @@ class DataLogger:
                 else:
                     payload=message
 
-                res=self.client.publish(topic,payload)
+                res=self.client.publish(topic,payload,qos=self.qos)
                 if res[0] != 0:
                     print("error publishing message")
                 

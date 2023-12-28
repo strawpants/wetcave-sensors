@@ -5,6 +5,7 @@ mqtt:
         clientid: "wetcave"
         topicroot: "wetcave"
         port: 8883
+        qos: 1
 rangesounder:
         gpiopin: 24
         sampling: 60
