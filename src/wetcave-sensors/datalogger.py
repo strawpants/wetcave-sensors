@@ -15,13 +15,8 @@ import RPi.GPIO as GPIO
 
 logger = getLogger(__name__)
 
-def sigterm_handler(signal, frame):
-    # save the state here or do whatever you want
-    logger.info("Stopping Datalogger")
-    GPIO.cleanup()
-    sys.exit(0)
 
-signal.signal(signal.SIGTERM, sigterm_handler)
+# signal.signal(signal.SIGTERM, sigterm_handler)
 
 def serialize_nonstandard(item): 
     if isinstance(item, datetime): 
@@ -50,17 +45,22 @@ class DataLogger:
         self.topicroot=config["mqtt"]["topicroot"]
         self.port=config["mqtt"]["port"]
         self.qos=config["mqtt"]["qos"]
+        self.statustopic=f"{self.topicroot}/{clientid}/status"
         self.client = mqtt.Client(client_id=clientid,transport='tcp', protocol=mqtt.MQTTv5)
         self.client.username_pw_set(user,passw)
         self.client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
         self.client.on_connect = self.mqtt_onconnect
         self.client.on_disconnect = self.mqtt_ondisconnect
-        self.mqttConnected=False
+        self.client.will_set(self.statustopic, "LOST_CONNECTION", 1, False)
         self.pubcount=0
         
-
+        self.mqttConnected=False
+        #make sure to clean up stuff properly when this program is killed
+        signal.signal(signal.SIGTERM, self.cleanup)
+        signal.signal(signal.SIGINT, self.cleanup)
     def mqtt_onconnect(self,client, userdata, flags,rc,aux):
         self.mqttConnected=True    
+    
     def mqtt_ondisconnect(self,client, userdata, rc):
         self.mqttConnected=False
 
@@ -71,6 +71,9 @@ class DataLogger:
             self.client.connect(self.broker,port=self.port,keepalive=60);
             self.client.loop_start()
             time.sleep(5)
+            res=self.client.publish(self.statustopic, "OPEN_CONNECTION", 1, False)
+            if res[0] != 0:
+                print("error publishing message")
         except:
             print("Failed to resolve broker, continuing")
             self.mqttConnected=False
@@ -136,3 +139,14 @@ class DataLogger:
         #start processing the message queue
         await self.processMessages()
 
+    def cleanup(self,*args):
+        print("Stopping Datalogger")
+        #publish a message that this client is closing its connection
+        res=self.client.publish(self.statustopic, "CLOSED_CONNECTION", 1, False)
+        if res[0] != 0:
+            print("error publishing message")
+        
+        time.sleep(10)
+        self.client.disconnect()
+        GPIO.cleanup()
+        sys.exit(0)
