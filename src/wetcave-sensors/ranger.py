@@ -66,6 +66,10 @@ class RangeSensor(SensorBase):
             return
         dtmean=mean(dtlist)
         dtstd=stdev(dtlist)*sqrt(nsamples)
+        #update outlierbounds (20 cm +/- of previous estimate)
+        bound=(20e-2/self.speedofsound)*1e6
+        self.outlierbounds[0]=dtmean-bound
+        self.outlierbounds[1]=dtmean+bound
 
         now=datetime.now(timezone.utc)
         self.messages.append((self.topic+"/traveltime",{"time":now,"value":dtmean,"std":dtstd}))

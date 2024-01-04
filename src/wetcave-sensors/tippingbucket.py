@@ -16,6 +16,6 @@ class TippingBucket(SensorBase):
     
     def addtip(self,pin):
         #add a tipping event to the message (this function will be called on an intterupt)
-        self.messages.append((self.topic+"/tip",{"time":datetime.now(timezone.utc)}))
+        self.messages.append((self.topic+"/tip",{"time":datetime.now(timezone.utc),"valid":1}))
     
 
