@@ -1,14 +1,17 @@
 import asyncio
 from datetime import datetime,timedelta,timezone
 from copy import deepcopy
+import json
 
 class SensorBase():
     def __init__(self,topic,sampling):
         self.topic="sensor/"+topic
-        self.sampling=timedelta(seconds=sampling)
         self.t0=datetime.now(timezone.utc)
         self.lastsample=self.t0
         self.messages=[self.uptime()]  
+        self.subscribetopic="sensor/"+topic+"/task"
+        self.qos=1
+        self.setsampling(sampling)
     
     def uptime(self):
         return (self.topic+"/uptime",{"start":self.t0,"sec":(datetime.now(timezone.utc)-self.t0).seconds})
@@ -40,6 +43,18 @@ class SensorBase():
         self.messages=[]
         self.lastsample=now
         return messagescopy
-
     
+    def setsampling(self,sampling):
+        print(f"change sampling of {self.topic} to {sampling}sec")
+        self.sampling=timedelta(seconds=sampling)
+        self.messages.append((self.topic+"/sampling",sampling))
+    
+    def subscribe(self):
+        return (self.subscribetopic,self.qos)
 
+    def task_handler(self,message):
+        action=json.loads(message.payload)
+        for ky,val in action.items():
+            if ky == "setsampling":
+                #change the sampling
+                self.setsampling(val)

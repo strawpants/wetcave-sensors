@@ -10,6 +10,7 @@ import json
 from ranger import RangeSensor
 from baro import PressTempSensor
 from tippingbucket import TippingBucket
+from relay import Relay
 import time
 import RPi.GPIO as GPIO
 
@@ -36,6 +37,10 @@ class DataLogger:
         self.sensors.append(RangeSensor(**config["rangesounder"]))
         self.sensors.append(PressTempSensor(**config["barotemp"]))
         self.sensors.append(TippingBucket(**config["tippingbucket"]))
+        
+        self.relays=[]
+        for ky,val in config["relays"].items():
+            self.relays.append(Relay(name=ky,**val))
 
         #initiate mqtt client
         clientid=config["mqtt"]["clientid"]
@@ -51,9 +56,12 @@ class DataLogger:
         self.client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
         self.client.on_connect = self.mqtt_onconnect
         self.client.on_disconnect = self.mqtt_ondisconnect
+        self.client.on_message = self.mqtt_onmessage
         self.client.will_set(self.statustopic+"/offline", "LOST_CONNECTION", 1, True)
         self.pubcount=0
         
+        self.taskhandlers={}
+
         self.mqttConnected=False
         #make sure to clean up stuff properly when this program is killed
         signal.signal(signal.SIGTERM, self.cleanup)
@@ -63,6 +71,15 @@ class DataLogger:
     
     def mqtt_ondisconnect(self,client, userdata, rc):
         self.mqttConnected=False
+    
+    def mqtt_onmessage(self,client, userdata, message):
+        """Take action when a certain message is received"""
+        if message.topic in self.taskhandlers:
+            #execute task handler function
+            self.taskhandlers[message.topic](message)
+        else:
+            print("ignoring {message.topic}")
+
 
     def mqtt_connect(self):
         if self.mqttConnected:
@@ -74,6 +91,19 @@ class DataLogger:
             res=self.client.publish(self.statustopic+"/online", datetime.now(timezone.utc).isoformat(), 1, True)
             if res[0] != 0:
                 print("error publishing message")
+
+            #register listeners by subscrining to sensor and relay tasks
+            self.taskhandlers={}
+            subscriptions=[]
+            for dev in self.sensors + self.relays:
+                topic,qos=dev.subscribe()
+                # Link the device task handlers to the topic
+                fulltopic=self.topicroot+"/"+topic
+                self.taskhandlers[fulltopic]=dev.task_handler
+                print(f"Listening (subscribing) on {fulltopic}")
+                self.client.subscribe(fulltopic,qos)
+
+
         except:
             print("Failed to resolve broker, continuing")
             self.mqttConnected=False
@@ -85,12 +115,16 @@ class DataLogger:
             topic=self.topicroot+"/"+sensor.topic
 
             print(f"\t{topic}, sampling at {sensor.sampling} seconds")
+        
+        print("Registered relays:")
+        for relay in self.relays:
+            topic=self.topicroot+"/"+relay.topic
+
+            print(f"\t{topic}, waiting for plans")
     
     async def startsensor(self,sensor):
         """Producer function: Add measurements to the queue once they become available"""
         
-        #note: some sensor may need to run their own asyncio loop so this can be implemented in the start function (default just returns without doing anything
-        # sensortask=asyncio.create_task(sensor.start())
         print(f"Acquiring samples for {sensor.topic}")
         while True:
             print("calling sample")
@@ -99,10 +133,22 @@ class DataLogger:
             for topic,message in sensormessages:
                 await self.messages.put((topic,message))
     
+    async def startrelay(self,relay):
+        """Producer function: Start the relay loop"""
+        
+        print(f"Starting relay loop {relay.topic}")
+        looptask=asyncio.create_task(relay.start_loop())
+        print("Check for relay messages")
+        while True:
+            relaymessages=await relay.getmessages()
+            # print("Queuing messages")
+            for topic,message in relaymessages:
+                await self.messages.put((topic,message))
     
     async def processMessages(self):
         """Consumer function: process messages"""
         print("waiting for messages")
+        self.mqtt_connect()
         while True:
             topic,message=await self.messages.get()
             #todo send to mqtt server & possibly log locally
@@ -135,9 +181,16 @@ class DataLogger:
         sensortasks=[]
         for sensor in self.sensors:
             sensortasks.append(asyncio.create_task(self.startsensor(sensor)))
-        
+       
+        # add relays
+        relaytasks=[]
+        for relay in self.relays:
+            relaytasks.append(asyncio.create_task(self.startrelay(relay)))
+
         #start processing the message queue
         await self.processMessages()
+    
+
 
     def cleanup(self,*args):
         print("Stopping Datalogger")
