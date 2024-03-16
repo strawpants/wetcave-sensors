@@ -13,7 +13,7 @@ class Relay:
         self.messages=[]
         self.subscribetopic=self.topic+"/task"
         self.qos=1
-        #defaullt plan is invalid (no on time scheduled)
+        #default plan is invalid (no on time scheduled)
         self.plan_start=datetime.max
         self.plan_stop=datetime.min
         self.plan_active=False

@@ -57,7 +57,7 @@ class DataLogger:
         self.client.on_connect = self.mqtt_onconnect
         self.client.on_disconnect = self.mqtt_ondisconnect
         self.client.on_message = self.mqtt_onmessage
-        self.client.will_set(self.statustopic+"/offline", "LOST_CONNECTION", 1, True)
+        self.client.will_set(self.statustopic+"/status", "LOST_CONNECTION", 1, True)
         self.pubcount=0
         
         self.taskhandlers={}
@@ -88,7 +88,7 @@ class DataLogger:
             self.client.connect(self.broker,port=self.port,keepalive=60);
             self.client.loop_start()
             time.sleep(5)
-            res=self.client.publish(self.statustopic+"/online", datetime.now(timezone.utc).isoformat(), 1, True)
+            res=self.client.publish(self.statustopic+"/status", f"online since: {datetime.now(timezone.utc).isoformat()}", 1, True)
             if res[0] != 0:
                 print("error publishing message")
 
@@ -195,7 +195,7 @@ class DataLogger:
     def cleanup(self,*args):
         print("Stopping Datalogger")
         #publish a message that this client is closing its connection
-        res=self.client.publish(self.statustopic+"/offline", datetime.now(timezone.utc).isoformat(), 1, True)
+        res=self.client.publish(self.statustopic+"/status", f"offline since: {datetime.now(timezone.utc).isoformat()}", 1, True)
         if res[0] != 0:
             print("error publishing message")
         
