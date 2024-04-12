@@ -18,7 +18,7 @@ class RangeSensor(SensorBase):
         #default speed of sound
         self.speedofsound=speedofsound
         # add standard speed of sound to the messages
-        self.messages.append((self.topic+"/speedofsound",speedofsound))
+        self.messages.append((self.topic+"/speedofsound",speedofsound,self.qos,True))
    
     def sampleRangeSingle(self):
         #To initiate a measurement start by sending a pulse to the pin as output 
@@ -72,4 +72,4 @@ class RangeSensor(SensorBase):
         self.outlierbounds[1]=dtmean+bound
 
         now=datetime.now(timezone.utc)
-        self.messages.append((self.topic+"/traveltime",{"time":now,"value":dtmean,"std":dtstd}))
+        self.messages.append((self.topic+"/traveltime",{"time":now,"value":dtmean,"std":dtstd},self.qos,False))

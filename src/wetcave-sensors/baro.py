@@ -43,5 +43,5 @@ class PressTempSensor(SensorBase):
                 tempstd=stdev(templist)*error_scale
             
             now=datetime.now(timezone.utc)
-            self.messages.append((self.topic+"/pressure",{"time":now,"value":pres,"std":presstd}))
-            self.messages.append((self.topic+"/temp",{"time":now,"value":temp,"std":tempstd}))
+            self.messages.append((self.topic+"/pressure",{"time":now,"value":pres,"std":presstd},self.qos,False))
+            self.messages.append((self.topic+"/temp",{"time":now,"value":temp,"std":tempstd},self.qos,False))

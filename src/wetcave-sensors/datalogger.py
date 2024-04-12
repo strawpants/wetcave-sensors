@@ -56,6 +56,7 @@ class DataLogger:
         self.client.tls_set(cert_reqs=ssl.CERT_REQUIRED)
         self.client.on_connect = self.mqtt_onconnect
         self.client.on_disconnect = self.mqtt_ondisconnect
+        self.client.on_connect_fail = self.mqtt_onconnectfail
         self.client.on_message = self.mqtt_onmessage
         self.client.will_set(self.statustopic+"/status", "LOST_CONNECTION", 1, True)
         self.pubcount=0
@@ -68,9 +69,15 @@ class DataLogger:
         signal.signal(signal.SIGINT, self.cleanup)
     def mqtt_onconnect(self,client, userdata, flags,rc,aux):
         self.mqttConnected=True    
+        # self.client.loop_start()
     
     def mqtt_ondisconnect(self,client, userdata, rc):
         self.mqttConnected=False
+        # self.client.loop_stop()
+
+    def mqtt_onconnectfail(self,client,userdata):
+        self.mqttConnected=False
+        self.client.loop_stop()
     
     def mqtt_onmessage(self,client, userdata, message):
         """Take action when a certain message is received"""
@@ -130,8 +137,8 @@ class DataLogger:
             print("calling sample")
             sensormessages=await sensor.sample()
             # print("Queuing messages")
-            for topic,message in sensormessages:
-                await self.messages.put((topic,message))
+            for message in sensormessages:
+                await self.messages.put(message)
     
     async def startrelay(self,relay):
         """Producer function: Start the relay loop"""
@@ -142,19 +149,18 @@ class DataLogger:
         while True:
             relaymessages=await relay.getmessages()
             # print("Queuing messages")
-            for topic,message in relaymessages:
-                await self.messages.put((topic,message))
+            for message in relaymessages:
+                await self.messages.put(message)
     
     async def processMessages(self):
         """Consumer function: process messages"""
         print("waiting for messages")
         self.mqtt_connect()
         while True:
-            topic,message=await self.messages.get()
+            topic,message,qos,retain=await self.messages.get()
             #todo send to mqtt server & possibly log locally
             print(f"{topic},{message}")
-            if not self.mqttConnected:
-                self.mqtt_connect()
+            self.mqtt_connect()
             
             if self.mqttConnected:
                 #publish message
@@ -165,7 +171,7 @@ class DataLogger:
                 else:
                     payload=message
 
-                res=self.client.publish(topic,payload,qos=self.qos)
+                res=self.client.publish(topic,payload,qos=qos,retain=retain)
                 if res[0] != 0:
                     print("error publishing message")
                 

@@ -24,7 +24,7 @@ class Relay:
             print(f"{self.topic} switching relay to ON")
             GPIO.output(self.pin,GPIO.LOW)
             self.isoff=False
-            self.messages.append((self.topic+"/event",{"on":datetime.now(timezone.utc)}))
+            self.messages.append((self.topic+"/event",{"on":datetime.now(timezone.utc)},self.qos,False))
 
     
     def off(self):
@@ -32,11 +32,11 @@ class Relay:
             print(f"{self.topic} switching relay to OFF")
             GPIO.output(self.pin,GPIO.HIGH)
             self.isoff=True
-            self.messages.append((self.topic+"/event",{"off":datetime.now(timezone.utc)}))
+            self.messages.append((self.topic+"/event",{"off":datetime.now(timezone.utc)},self.qos,False))
 
     def setplan(self,start,stop):
         print(f"setting up relay plan {start} - {stop}")
-        self.messages.append((self.topic+"/plan",{"start":start,"stop":stop}))
+        self.messages.append((self.topic+"/plan",{"start":start,"stop":stop},self.qos,False))
         self.plan_start=start
         self.plan_stop=stop
         self.plan_active=True
@@ -93,6 +93,8 @@ class Relay:
                 start=datetime.now(timezone.utc)
                 stop=start+timedelta(seconds=duration)
                 self.setplan(start,stop)
+            else:
+                print(f"Don't know what to do with {ky}, ignoring")
     
     def subscribe(self):
         return (self.subscribetopic,self.qos)

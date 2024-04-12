@@ -4,21 +4,22 @@ from copy import deepcopy
 import json
 
 class SensorBase():
+
     def __init__(self,topic,sampling):
         self.topic="sensor/"+topic
         self.t0=datetime.now(timezone.utc)
         self.lastsample=self.t0
-        self.messages=[self.uptime()]  
-        self.subscribetopic="sensor/"+topic+"/task"
         self.qos=1
+        self.subscribetopic="sensor/"+topic+"/task"
+        self.messages=[self.uptime()]  
         self.setsampling(sampling)
     
     def uptime(self):
-        return (self.topic+"/uptime",{"start":self.t0,"sec":(datetime.now(timezone.utc)-self.t0).seconds})
+        return (self.topic+"/uptime",{"start":self.t0,"sec":(datetime.now(timezone.utc)-self.t0).seconds},self.qos,False)
 
     def disconnect_msg(self):
         #message 0 means regular (client initiated) disconnect 
-        return (self.topic+"/disconnect",{"time":datetime.now(timezone.utc)})
+        return (self.topic+"/disconnect",{"time":datetime.now(timezone.utc)},self.qos,False)
 
     async def start(self):
         """Default does nothing, derived classes may implement this if needed"""
@@ -47,7 +48,7 @@ class SensorBase():
     def setsampling(self,sampling):
         print(f"change sampling of {self.topic} to {sampling}sec")
         self.sampling=timedelta(seconds=sampling)
-        self.messages.append((self.topic+"/sampling",sampling))
+        self.messages.append((self.topic+"/sampling",sampling,self.qos,True))
     
     def subscribe(self):
         return (self.subscribetopic,self.qos)

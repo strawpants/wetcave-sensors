@@ -12,10 +12,10 @@ class TippingBucket(SensorBase):
         GPIO.setup(self.pin, GPIO.IN,pull_up_down = GPIO.PUD_DOWN)
         GPIO.add_event_detect(self.pin,GPIO.RISING,callback=self.addtip,bouncetime=333)
         # add standard mm_tip value to the messages
-        self.messages.append((self.topic+"/mm_tip",mm_tip))
+        self.messages.append((self.topic+"/mm_tip",mm_tip,self.qos,False))
     
     def addtip(self,pin):
         #add a tipping event to the message (this function will be called on an intterupt)
-        self.messages.append((self.topic+"/tip",{"time":datetime.now(timezone.utc),"valid":1}))
+        self.messages.append((self.topic+"/tip",{"time":datetime.now(timezone.utc),"valid":1},self.qos,False))
     
 
