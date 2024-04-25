@@ -4,17 +4,18 @@ from datetime import datetime,timezone
 from hp206c import hp206c
 from statistics import mean,stdev
 from math import sqrt
+from messagelogging import logger
+
 class PressTempSensor(SensorBase):
     def __init__(self,sampling,nsamples):
         super().__init__("barotemp",sampling)
-        print(f"Starting {self.topic}")        
         self.nbarosamples=nsamples
         self.pres_temp=hp206c()
         ret=self.pres_temp.isAvailable()
         if self.pres_temp.OK_HP20X_DEV == ret:
-            print("Barometer is available.")
+            logger.info("Barometer is available.")
         else:
-            print("Barometer isn't availablei, disabling")
+            logger.error("Barometer isn't availablei, disabling")
             self.pres_temp=None
 
    

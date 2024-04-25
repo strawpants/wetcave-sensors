@@ -3,6 +3,8 @@ import RPi.GPIO as GPIO
 from datetime import datetime,timezone,timedelta
 import json
 from copy import deepcopy
+from messagelogging import logger
+
 class Relay:
     def __init__(self,name,gpiopin):
         self.pin=gpiopin
@@ -21,7 +23,7 @@ class Relay:
 
     def on(self):
         if self.isoff:
-            print(f"{self.topic} switching relay to ON")
+            logger.info(f"{self.topic} switching relay to ON")
             GPIO.output(self.pin,GPIO.LOW)
             self.isoff=False
             self.messages.append((self.topic+"/event",{"on":datetime.now(timezone.utc)},self.qos,False))
@@ -29,13 +31,13 @@ class Relay:
     
     def off(self):
         if not self.isoff:
-            print(f"{self.topic} switching relay to OFF")
+            logger.info(f"{self.topic} switching relay to OFF")
             GPIO.output(self.pin,GPIO.HIGH)
             self.isoff=True
             self.messages.append((self.topic+"/event",{"off":datetime.now(timezone.utc)},self.qos,False))
 
     def setplan(self,start,stop):
-        print(f"setting up relay plan {start} - {stop}")
+        logger.info(f"setting up relay plan {start} - {stop}")
         self.messages.append((self.topic+"/plan",{"start":start,"stop":stop},self.qos,False))
         self.plan_start=start
         self.plan_stop=stop
@@ -53,7 +55,7 @@ class Relay:
 
     async def start_loop(self):
         """ Run a loop to check whether the relay needs to be switched on"""
-        print(f"starting relay listener {self.topic}")
+        logger.info(f"starting relay listener {self.topic}")
         while True:
             if not self.plan_active:
                 #just sleep before trying again
@@ -68,7 +70,7 @@ class Relay:
                     self.on()
                 elif self.plan_stop < now:
                     #plan has stopped 
-                    print(f"End of plan for {self.topic}")
+                    logger.info(f"End of plan for {self.topic}")
                     self.plan_active=False
                     self.off()
                 else:                
@@ -94,7 +96,7 @@ class Relay:
                 stop=start+timedelta(seconds=duration)
                 self.setplan(start,stop)
             else:
-                print(f"Don't know what to do with {ky}, ignoring")
+                logger.warning(f"Don't know what to do with {ky}, ignoring")
     
     def subscribe(self):
         return (self.subscribetopic,self.qos)

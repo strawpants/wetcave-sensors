@@ -5,13 +5,13 @@ from statistics import mean,stdev
 from math import sqrt
 import RPi.GPIO as GPIO
 import time
+from messagelogging import logger
 
 usleep = lambda x: time.sleep(x*1e-6)
 
 class RangeSensor(SensorBase):
     def __init__(self,sampling,gpiopin,nsamples,speedofsound):
         super().__init__("range",sampling)
-        print(f"Starting {self.topic}")        
         self.nsamples=nsamples
         self.pin=gpiopin
         self.outlierbounds=[800,12000]
@@ -62,7 +62,7 @@ class RangeSensor(SensorBase):
         nsamples=len(dtlist)
         if nsamples < 2:
             #don't add message if the amount of data points is below the bare minimum
-            print(f"Not enough samples for the range: {nsamples}")
+            logger.warning(f"Not enough samples for the range: {nsamples}")
             return
         dtmean=mean(dtlist)
         dtstd=stdev(dtlist)*sqrt(nsamples)

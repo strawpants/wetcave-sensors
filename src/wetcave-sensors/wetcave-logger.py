@@ -3,6 +3,7 @@
 import os
 import yaml
 from datalogger import DataLogger
+from messagelogging import setuplogger
 import asyncio
 
 def readconfig(ymlfile=None):
@@ -11,6 +12,7 @@ def readconfig(ymlfile=None):
     with open(ymlfile,'rt') as fid:
         config=yaml.safe_load(fid)
 
+    
     return config
     
 
@@ -19,6 +21,11 @@ def readconfig(ymlfile=None):
 
 def main():
     config=readconfig()
+
+    #setup message logging
+    setuplogger(logfile=config['logging']['file'],debug=config['logging']['debug'])
+
+    
     dlogger=DataLogger(config)
 
     dlogger.list()    

@@ -2,11 +2,12 @@ import asyncio
 from datetime import datetime,timedelta,timezone
 from copy import deepcopy
 import json
-
+from messagelogging import logger
 class SensorBase():
 
     def __init__(self,topic,sampling):
         self.topic="sensor/"+topic
+        logger.info(f"Starting {self.topic}")        
         self.t0=datetime.now(timezone.utc)
         self.lastsample=self.t0
         self.qos=1
@@ -46,7 +47,7 @@ class SensorBase():
         return messagescopy
     
     def setsampling(self,sampling):
-        print(f"change sampling of {self.topic} to {sampling}sec")
+        logger.info(f"change sampling of {self.topic} to {sampling}sec")
         self.sampling=timedelta(seconds=sampling)
         self.messages.append((self.topic+"/sampling",sampling,self.qos,True))
     

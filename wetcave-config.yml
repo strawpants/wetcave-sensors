@@ -19,3 +19,6 @@ barotemp:
         sampling: 60
         nsamples: 5
 
+logging:
+        file: "/tmp/wetcave.log"
+        debug: No
