@@ -33,10 +33,19 @@ class DataLogger:
         #initialize all sensors
 
         self.sensors=[]
-        self.sensors.append(RangeSensor(**config["rangesounder"]))
-        self.sensors.append(PressTempSensor(**config["barotemp"]))
-        self.sensors.append(TippingBucket(**config["tippingbucket"]))
-        
+        try:
+            self.sensors.append(RangeSensor(**config["rangesounder"]))
+        except:
+            logger.warning("Cannot add range sensor, ignoring")
+        try:   
+            self.sensors.append(PressTempSensor(**config["barotemp"]))
+        except:
+            logger.warning("Cannot add pressure/temp sensor, ignoring")
+        try:
+            self.sensors.append(TippingBucket(**config["tippingbucket"]))
+        except:
+            logger.warning("Cannot add tipping bucket sensor, ignoring")
+
         self.relays=[]
         for ky,val in config["relays"].items():
             self.relays.append(Relay(name=ky,**val))
