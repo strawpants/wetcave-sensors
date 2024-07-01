@@ -75,9 +75,23 @@ class DataLogger:
         #make sure to clean up stuff properly when this program is killed
         signal.signal(signal.SIGTERM, self.cleanup)
         signal.signal(signal.SIGINT, self.cleanup)
+    
     def mqtt_onconnect(self,client, userdata, flags,rc,aux):
         self.mqttConnected=True    
-        # self.client.loop_start()
+        res=client.publish(self.statustopic+"/status", f"online since: {datetime.now(timezone.utc).isoformat()}", 1, True)
+        if res[0] != 0:
+            logger.error("error publishing online message")
+
+        #subscribe to topics
+        #register listeners by subscrining to sensor and relay tasks
+        self.taskhandlers={}
+        for dev in self.sensors + self.relays:
+            topic,qos=dev.subscribe()
+            # Link the device task handlers to the topic
+            fulltopic=self.topicroot+"/"+topic
+            self.taskhandlers[fulltopic]=dev.task_handler
+            logger.info(f"Listening (subscribing) on {fulltopic}")
+            client.subscribe(fulltopic,qos)
     
     def mqtt_ondisconnect(self,client, userdata, rc):
         self.mqttConnected=False
@@ -103,20 +117,7 @@ class DataLogger:
             self.client.connect(self.broker,port=self.port,keepalive=60);
             self.client.loop_start()
             time.sleep(5)
-            res=self.client.publish(self.statustopic+"/status", f"online since: {datetime.now(timezone.utc).isoformat()}", 1, True)
-            if res[0] != 0:
-                logger.error("error publishing message")
 
-            #register listeners by subscrining to sensor and relay tasks
-            self.taskhandlers={}
-            subscriptions=[]
-            for dev in self.sensors + self.relays:
-                topic,qos=dev.subscribe()
-                # Link the device task handlers to the topic
-                fulltopic=self.topicroot+"/"+topic
-                self.taskhandlers[fulltopic]=dev.task_handler
-                logger.info(f"Listening (subscribing) on {fulltopic}")
-                self.client.subscribe(fulltopic,qos)
 
 
         except:
