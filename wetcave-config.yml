@@ -1,24 +1,74 @@
 mqtt:
-        server: "your.mqtt.serverhost"
-        user: "mqttusername"
-        password: "mqttpassword"
-        clientid: "wetcave"
-        topicroot: "wetcave"
-        port: 8883
+        server: "mqtt.server.org"
+        user: "MQTTUSER"
+        password: "MQTTPASSWORD"
+        clientid: "CLIENTID"
+        topicroot: "homeassistant"
+        port: 1234
         qos: 1
+numbers:
+        tankarea:
+                description: "cross-sectional area of the tank"
+                value: 2.489
+                unit: "m2"
+                devclass: "area"
+        sensorheight:
+                description: "Height of the sensor above the zero level"
+                value: 101
+                unit: "cm"
+                devclass: "distance"
+        tanktoplevel:
+                description: "Height until the tank has the normal cross section"
+                value: 78.5
+                unit: "cm"
+                devclass: "distance"
+        tankdeadzone:
+                description: "Height below no water can be extracted"
+                value: 6
+                unit: "cm"
+                devclass: "distance"
+        speedofsound:
+                description: "speed of sound in air"
+                value: 340
+                unit: "m/s"
+                devclass: "speed"
+        mmpertip:
+                description: "mm rain per tip"
+                value: 0.343839
+                unit: "mm"
+                devclass: "precipitation"
+hass:
+        unique_id: "wetcave"
+        hw_id: "wetcave-build2023"
+        builder_id: "Rietbroek"
 rangesounder:
         gpiopin: 24
         sampling: 60
-        nsamples: 5
+        nsamples: 10
         speedofsound: 340
-tippingbucket:
-        sampling: 60
-        gpiopin: 10
-        mm_tip: 0.343839
-barotemp:
-        sampling: 60
-        nsamples: 5
-
+        unit: "mus"
+        longname: "Tank level sounder"
+        devclass: "duration"
+#tippingbucket:
+        #sampling: 60
+        #gpiopin: 10
+        #mm_tip: 0.343839
+#barotemp:
+        #sampling: 60
+        #nsamples: 5
+relays:
+        waterpump:
+                gpiopin: 6
+                icon: "mdi:water-pump"
+                longname: "Water pomp"
+        airpump:
+                gpiopin: 5
+                icon: "mdi:chart-bubble"
+                longname: "vijver beluchting"
 logging:
-        file: "/tmp/wetcave.log"
-        debug: No
+        file: "/var/log/wetcave-hass.log"
+        debug: Yes
+
+
+        
+

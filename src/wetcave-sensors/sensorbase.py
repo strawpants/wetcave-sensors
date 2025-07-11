@@ -5,16 +5,23 @@ import json
 from messagelogging import logger
 class SensorBase():
 
-    def __init__(self,topic,sampling):
-        self.topic="sensor/"+topic
+    def __init__(self,name,sampling,root="",icon="mdi:gauge",longname="",unit="null",devclass="",stateclass="MEASUREMENT"):
+        self.roottopic=root
+        self.topic=f"{root}/sensor/{name}"
         logger.info(f"Starting {self.topic}")        
         self.t0=datetime.now(timezone.utc)
         self.lastsample=self.t0
         self.qos=1
-        self.subscribetopic="sensor/"+topic+"/task"
+        self.subscribetopic=self.topic+"/task"
         self.messages=[self.uptime()]  
         self.setsampling(sampling)
-    
+        self.name=name
+        self.icon=icon
+        self.devclass=devclass
+        self.longname=longname
+        self.stateclass=stateclass
+        self.unit=unit
+
     def uptime(self):
         return (self.topic+"/uptime",{"start":self.t0,"sec":(datetime.now(timezone.utc)-self.t0).seconds},self.qos,False)
 
@@ -60,3 +67,22 @@ class SensorBase():
             if ky == "setsampling":
                 #change the sampling
                 self.setsampling(val)
+                
+    def hass_discovery(self):
+        #generate the discovery dictionary
+        hadict={
+            "~":self.roottopic,
+            "p": "sensor",
+            "device_class":self.devclass,
+            "name":self.longname,
+            "command_topic":self.subscribetopic.replace(self.roottopic,'~'),
+            "unit_of_measurement":self.unit,
+            "value_template":"{{value_json.value}}",
+            "unique_id":self.name+"_0y1",
+            "icon":self.icon,
+            "state_topic":self.topic.replace(self.roottopic,'~'),
+            "state_class":self.stateclass,
+            "qos":1
+            }
+        return hadict
+
