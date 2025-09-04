@@ -82,6 +82,8 @@ class SensorBase():
             "icon":self.icon,
             "state_topic":self.topic.replace(self.roottopic,'~'),
             "state_class":self.stateclass,
+            "json_attributes_topic":self.topic.replace(self.roottopic,'~'),
+            "json_attributes_template": "{{ value_json  | tojson }}",
             "qos":1
             }
         return hadict

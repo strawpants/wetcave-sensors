@@ -103,7 +103,7 @@ class HADataLogger:
         self.publish_discovery()
 
         #subscribe to homeassistant status
-        client.subscribe(self.hass_status,0)
+        client.subscribe(self.hass_status,1)
 
 
 
@@ -127,9 +127,11 @@ class HADataLogger:
     
     def mqtt_onmessage(self,client, userdata, message):
         """Take action when a certain message is received"""
-        if message.topic == self.hass_status and message.payload == 'online':
-            #republish discovery when Home assistant comes online again
-            self.publish_discovery()
+        if message.topic == self.hass_status: 
+            
+            if message.payload == b'online':
+                #republish discovery when Home assistant comes online again
+                self.publish_discovery()
     
         if message.topic in self.taskhandlers:
             #execute task handler function
