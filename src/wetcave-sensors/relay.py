@@ -6,7 +6,7 @@ from copy import deepcopy
 from messagelogging import logger
 
 class Relay:
-    def __init__(self,name,gpiopin,longname="Relais",icon="mdi:toggle-switch",root=""):
+    def __init__(self,name,gpiopin,longname="Relais",icon="mdi:toggle-switch",root="",duration_default=60):
         self.pin=gpiopin
         self.roottopic=root
         self.topic=f"{root}/relay/{name}"
@@ -24,6 +24,7 @@ class Relay:
         self.icon=icon
         self.name=name
         self.longname=longname
+        self.duration=duration_default
 
         self.messages.append((self.statetopic,{"status":"OFF","since":datetime.now(timezone.utc)},self.qos,False))
 
@@ -129,7 +130,7 @@ class Relay:
             "p": "switch",
             "device_class":"outlet",
             "name":self.longname,
-            "command_template":'{"switch": "{{value}}","duration":60}',
+            "command_template":f'{{"switch": "{{{{value}}}}","duration":{self.duration}}}',
             "command_topic":self.subscribetopic.replace(self.roottopic,'~'),
             "value_template":"{{value_json.status}}",
             "unique_id":self.name+"_001",

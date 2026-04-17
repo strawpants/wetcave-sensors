@@ -61,6 +61,7 @@ relays:
                 gpiopin: 6
                 icon: "mdi:water-pump"
                 longname: "Water pomp"
+                default_duration: 60
         airpump:
                 gpiopin: 5
                 icon: "mdi:chart-bubble"
