@@ -8,6 +8,7 @@ import asyncio
 import ssl
 import json
 from ranger import RangeSensor
+from levelsensor import LevelSensor 
 from baro import PressTempSensor
 from tippingbucket import TippingBucket
 from relay import Relay
@@ -74,8 +75,13 @@ class HADataLogger:
             name='rangesounder'
             self.sensors.append(RangeSensor(name=name,root=self.hass_deviceroot,**config[name]))
         except Exception as exc:
-            breakpoint()
             logger.warning("Cannot add range sensor, ignoring")
+        
+        try:
+            name='levelsensor'
+            self.sensors.append(LevelSensor(name=name,root=self.hass_deviceroot,**config[name]))
+        except Exception as exc:
+            logger.warning("Cannot add level sensor, ignoring")
 
         self.client = mqtt.Client(client_id=clientid,transport='tcp', protocol=mqtt.MQTTv5)
         self.client.username_pw_set(user,passw)
